@@ -10,6 +10,7 @@ import {
   toDateOnly,
 } from "@/lib/domain";
 import { CopyButton } from "@/components/CopyButton";
+import { InviteMessageField } from "@/components/InviteMessageField";
 
 export default async function HostDashboard({
   params,
@@ -175,17 +176,7 @@ export default async function HostDashboard({
             </select>
           </label>
 
-          <label className="block">
-            <span className="block text-sm text-ink-soft mb-1.5">
-              초대 문구 <span className="text-ink-soft/60">(선택)</span>
-            </span>
-            <textarea
-              name="inviteMsg"
-              rows={2}
-              placeholder="얘들아 나 결혼해! 청첩장 주면서 밥 한번 사고 싶은데 언제 좋아?"
-              className="w-full rounded-lg border border-line bg-cream/40 px-3.5 py-2.5 outline-none focus:border-blush focus:bg-white transition resize-none"
-            />
-          </label>
+          <InviteMessageField />
 
           <button
             type="submit"
