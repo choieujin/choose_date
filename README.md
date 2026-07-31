@@ -94,6 +94,8 @@ node prisma/seed.mjs
 
 친구들은 각자 폰(다른 네트워크)에서 접속하므로 `localhost`로는 안 됩니다. **Cloudflare Tunnel(무료)** 로 공개 https 주소를 만드는 걸 권장합니다. 항상 켜둘 수 있는 데스크톱을 호스트로 쓰세요.
 
+> ⚠️ **외부(터널) 접속은 반드시 프로덕션으로 실행하세요.** `pnpm dev` + 터널 조합은 클라이언트 스크립트가 로드되지 않아 **복사·투표 달력 등 버튼이 동작하지 않습니다.** 아래 `pnpm build && pnpm start` 또는 도커 프로덕션으로 띄우세요. (`pnpm dev`는 내 컴퓨터 localhost 개발용)
+
 ### 1. 앱 + DB 함께 실행 (프로덕션)
 ```bash
 NEXT_PUBLIC_BASE_URL="https://your-tunnel-url" \
