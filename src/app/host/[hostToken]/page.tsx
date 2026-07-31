@@ -102,10 +102,8 @@ export default async function HostDashboard({
             >
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-ink truncate">
-                      {g.name}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium text-ink">{g.name}</span>
                     <span className="shrink-0 rounded-full bg-sage-soft text-sage px-2 py-0.5 text-[11px]">
                       {SLOTTYPE_LABEL[g.slotType]}
                     </span>

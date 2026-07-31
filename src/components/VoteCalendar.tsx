@@ -189,7 +189,7 @@ export function VoteCalendar({
 
       {err && <p className="text-sm text-blush text-center">{err}</p>}
 
-      <div className="sticky bottom-4">
+      <div className="sticky bottom-0 z-10 -mx-5 mt-2 bg-gradient-to-t from-cream from-60% to-transparent px-5 pb-4 pt-6">
         <button
           type="button"
           onClick={onSubmit}
