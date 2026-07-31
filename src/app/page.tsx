@@ -80,7 +80,7 @@ function Field({
   hint?: string;
 }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="block text-sm text-ink-soft mb-1.5">{label}</span>
       <input
         name={name}

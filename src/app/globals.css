@@ -41,6 +41,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 폼 컨트롤이 grid/flex 칸을 넘치지 않게 (특히 iOS의 date/number 입력) */
+input,
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+/* iOS Safari 에서 입력 시 자동 확대 방지 (16px 미만이면 확대됨) */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* 은은한 배경 텍스처 */
 .bg-paper {
   background-color: var(--cream);
