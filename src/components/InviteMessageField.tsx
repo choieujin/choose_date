@@ -2,13 +2,44 @@
 
 import { useState } from "react";
 
-const TEMPLATES: Record<"friend" | "boss", string[]> = {
+type Cat = "friend" | "senior" | "family" | "acquaintance" | "boss";
+
+const TABS: { key: Cat; label: string }[] = [
+  { key: "friend", label: "친구용" },
+  { key: "senior", label: "선후배용" },
+  { key: "family", label: "가족·친척용" },
+  { key: "acquaintance", label: "지인·이웃용" },
+  { key: "boss", label: "직장상사용" },
+];
+
+const TEMPLATES: Record<Cat, string[]> = {
   friend: [
     "얘들아 나 결혼해! 청첩장 주면서 밥 한번 사고 싶은데 언제 좋아? 😊",
     "드디어 나도 국수 먹인다ㅎㅎ 청첩장도 줄 겸 얼굴 보고 밥 먹자!",
     "나 결혼한다!! 너희한테 직접 청첩장 주고 싶어서, 다 같이 밥 한 끼 하자 🍚",
     "결혼 소식 전하려고! 바쁘겠지만 잠깐 시간 내서 밥 먹으면서 청첩장 받아줘 💌",
     "우리 언제 한번 모이자~ 나 결혼하는데 청첩장 직접 주고 싶어! 편한 날 골라줘 🙌",
+  ],
+  senior: [
+    "저 결혼해요! 오랜만에 얼굴 보고 청첩장 드리면서 밥 한번 같이 먹어요. 편한 날 골라주세요 😄",
+    "오랜만이에요! 저 이번에 결혼합니다. 청첩장 직접 드리고 싶은데 시간 괜찮으신 날 있으세요?",
+    "결혼 소식 전해요! 밥 사면서 청첩장 드릴게요. 언제가 좋은지 편하게 골라주세요 🍚",
+    "저 결혼합니다ㅎㅎ 청첩장도 줄 겸 오랜만에 밥 한 끼 해요! 가능한 날 표시해 주세요.",
+    "결혼하게 됐어요! 바쁘시겠지만 잠깐 시간 내서 밥 먹으면서 청첩장 받아주세요 🙌",
+  ],
+  family: [
+    "안녕하세요! 저 이번에 결혼해요 😊 청첩장 직접 드리고 밥도 대접하고 싶은데, 편하신 날 골라주시면 찾아뵐게요.",
+    "결혼 소식 전하려고 연락드려요! 얼굴 뵙고 청첩장 드리면서 식사 한 끼 대접하고 싶어요. 가능한 날 알려주세요 💕",
+    "저 드디어 결혼해요! 바쁘시겠지만 시간 내주시면 맛있는 거 대접하면서 청첩장 드릴게요.",
+    "오랜만에 인사드려요! 저 결혼하게 됐어요. 청첩장도 드릴 겸 다 같이 식사해요. 편하신 날짜 표시해 주세요 🙏",
+    "결혼 앞두고 인사드리고 싶어요. 청첩장 직접 전해드리면서 밥 한 끼 하고 싶은데 언제가 좋으세요?",
+  ],
+  acquaintance: [
+    "안녕하세요! 이번에 결혼하게 되어 인사드려요. 청첩장 직접 전해드리고 싶은데 편하신 날 골라주시면 감사하겠습니다 😊",
+    "결혼 소식 전하려고 연락드렸어요. 식사 자리에서 청첩장 드리고 싶습니다. 가능하신 날짜 알려주세요.",
+    "반가워요! 저 결혼해요. 청첩장 드릴 겸 식사 한번 같이 해요. 편하신 시간 표시해 주시면 맞출게요 🙏",
+    "결혼을 앞두고 인사드려요. 밥 한 끼 대접하며 청첩장 전하고 싶은데, 괜찮으신 날 골라주세요.",
+    "안녕하세요 :) 결혼하게 되어 소식 전해요. 청첩장 직접 드리면서 식사하고 싶어요. 가능한 날짜 체크 부탁드려요.",
   ],
   boss: [
     "안녕하세요. 이번에 결혼하게 되어 청첩장을 직접 전해드리고자 합니다. 괜찮으신 날 편하게 골라주시면 감사하겠습니다.",
@@ -19,38 +50,32 @@ const TEMPLATES: Record<"friend" | "boss", string[]> = {
   ],
 };
 
-const TABS: { key: "friend" | "boss"; label: string }[] = [
-  { key: "friend", label: "친구용" },
-  { key: "boss", label: "직장상사용" },
-];
-
 export function InviteMessageField() {
-  const [tab, setTab] = useState<"friend" | "boss">("friend");
+  const [tab, setTab] = useState<Cat>("friend");
   const [value, setValue] = useState("");
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm text-ink-soft">
-          초대 문구 <span className="text-ink-soft/60">(선택)</span>
-        </span>
-        {/* 카테고리 탭 */}
-        <div className="flex gap-1 rounded-full bg-cream-deep/50 p-0.5">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={`rounded-full px-3 py-1 text-xs transition ${
-                tab === t.key
-                  ? "bg-white text-ink shadow-sm"
-                  : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <span className="block text-sm text-ink-soft mb-2">
+        초대 문구 <span className="text-ink-soft/60">(선택)</span>
+      </span>
+
+      {/* 카테고리 탭 (줄바꿈) */}
+      <div className="flex flex-wrap gap-1.5 mb-2.5">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`rounded-full px-3 py-1.5 text-xs border transition ${
+              tab === t.key
+                ? "bg-ink text-white border-ink"
+                : "bg-white text-ink-soft border-line hover:border-blush"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {/* 추천 문구 칩 */}
