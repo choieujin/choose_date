@@ -1,0 +1,107 @@
+// 청모 — 청첩장 모임 날짜 투표
+// 핵심: Confirmation 의 @@unique([eventId, date, slot]) 가 "전역 슬롯 잠금"을 보장한다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SlotType {
+  LUNCH
+  DINNER
+  BOTH
+}
+
+enum Slot {
+  LUNCH
+  DINNER
+}
+
+// BOTH 그룹 멤버의 점심/저녁 선호 (멤버당 1개)
+enum SlotPref {
+  LUNCH
+  DINNER
+  EITHER
+}
+
+enum VoteStatus {
+  YES // O — 가능
+  MAYBE // △ — 애매
+  NO // X — 불가
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  hostToken   String   @unique @default(cuid()) // 호스트 관리 링크용
+  groomName   String
+  brideName   String
+  weddingDate DateTime @db.Date
+  windowStart DateTime @db.Date
+  windowEnd   DateTime @db.Date
+  bufferDays  Int      @default(0) // 예식일 앞뒤로 자동 차단할 일수
+  createdAt   DateTime @default(now())
+
+  groups        Group[]
+  confirmations Confirmation[]
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  slotType  SlotType @default(DINNER)
+  inviteMsg String?
+  createdAt DateTime @default(now())
+
+  members      Member[]
+  confirmation Confirmation?
+
+  @@index([eventId])
+}
+
+model Member {
+  id        String    @id @default(cuid())
+  token     String    @unique @default(cuid()) // 개인 투표 링크
+  groupId   String
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  slotPref  SlotPref? // BOTH 그룹에서만: 점심/저녁 선호 (멤버당 1개)
+  submitted Boolean   @default(false) // 제출 완료 여부 (알림/진행률용)
+  createdAt DateTime  @default(now())
+
+  votes Vote[]
+
+  @@index([groupId])
+}
+
+// 날짜 단위 투표 (슬롯은 더 이상 날짜별로 고르지 않음)
+model Vote {
+  id        String     @id @default(cuid())
+  memberId  String
+  member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  date      DateTime   @db.Date
+  status    VoteStatus
+  updatedAt DateTime   @updatedAt
+
+  @@unique([memberId, date]) // 한 사람이 한 날짜에 한 표
+  @@index([memberId])
+}
+
+model Confirmation {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  groupId   String   @unique // 그룹당 확정 1개
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  slot      Slot
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, date, slot]) // ★ 전역 잠금: 한 (날짜,슬롯)은 이벤트 전체에서 한 번만
+  @@index([eventId])
+}

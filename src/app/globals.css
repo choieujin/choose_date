@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 웨딩 무드 팔레트 */
+  --cream: #fbf7f0;
+  --cream-deep: #f4ecdf;
+  --ink: #3a3330;
+  --ink-soft: #6b615b;
+  --blush: #d98b8b;
+  --blush-soft: #f0d3d0;
+  --sage: #8a9a86;
+  --sage-soft: #dfe6dc;
+  --gold: #c9a24b;
+  --line: #e7ddcf;
+
+  --background: var(--cream);
+  --foreground: var(--ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-blush: var(--blush);
+  --color-blush-soft: var(--blush-soft);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-gold: var(--gold);
+  --color-line: var(--line);
+  --font-serif: var(--font-serif-kr);
+  --font-sans: var(--font-sans-kr);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans-kr), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 은은한 배경 텍스처 */
+.bg-paper {
+  background-color: var(--cream);
+  background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(201, 162, 75, 0.06) 1px,
+      transparent 0
+    );
+  background-size: 22px 22px;
+}
+
+.font-serif-kr {
+  font-family: var(--font-serif-kr), serif;
+}
+
+/* 카드 */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(58, 51, 48, 0.04), 0 8px 24px rgba(58, 51, 48, 0.04);
 }

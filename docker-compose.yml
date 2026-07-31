@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cheongmo
+      POSTGRES_PASSWORD: cheongmo
+      POSTGRES_DB: cheongmo
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cheongmo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 배포용 웹 (Windows 데스크톱에서: docker compose up -d --build)
+  # 개발 중엔 이 서비스 없이 `docker compose up -d db` 만 쓰고 pnpm dev 로 돌려도 됨.
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://cheongmo:cheongmo@db:5432/cheongmo?schema=public"
+      # 확정 링크에 쓰일 공개 주소 (Cloudflare Tunnel 주소로 교체)
+      NEXT_PUBLIC_BASE_URL: "${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}"
+    ports:
+      - "3000:3000"
+    profiles:
+      - full
+
+volumes:
+  db-data:
