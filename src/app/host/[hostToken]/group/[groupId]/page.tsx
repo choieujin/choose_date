@@ -5,14 +5,17 @@ import { prisma } from "@/lib/prisma";
 import {
   SLOTPREF_LABEL,
   SLOTTYPE_LABEL,
-  candidateDates,
+  buildCalendar,
   dateKey,
+  eventCandidateKeys,
   formatDateLabel,
+  groupEffectiveKeys,
   slotsFor,
   toDateOnly,
 } from "@/lib/domain";
 import { MembersManager } from "@/components/MembersManager";
 import { ConfirmGrid, type ConfirmRow } from "@/components/ConfirmGrid";
+import { GroupDatesEditor } from "@/components/GroupDatesEditor";
 
 export default async function GroupPage({
   params,
@@ -24,8 +27,9 @@ export default async function GroupPage({
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     include: {
-      event: true,
+      event: { include: { blockedDates: true } },
       confirmation: true,
+      allowedDates: true,
       members: {
         orderBy: { createdAt: "asc" },
         include: { votes: true },
@@ -37,6 +41,24 @@ export default async function GroupPage({
   const event = group.event;
   const groupSlots = slotsFor(group.slotType);
   const isBoth = group.slotType === "BOTH";
+
+  // 후보 날짜: 이벤트 전체(기간-버퍼-개인잠금) → 그룹 허용목록 교집합
+  const blockedKeys = new Set(event.blockedDates.map((b) => dateKey(b.date)));
+  const eventKeys = eventCandidateKeys(
+    event.windowStart,
+    event.windowEnd,
+    event.weddingDate,
+    event.bufferDays,
+    blockedKeys,
+  );
+  const allowedList = group.allowedDates.map((d) => dateKey(d.date));
+  const groupKeys = groupEffectiveKeys(eventKeys, allowedList);
+  // 그룹 허용 날짜 에디터용 달력 (이벤트에서 고를 수 있는 날짜만 표시)
+  const groupDateCalendar = buildCalendar(
+    event.windowStart,
+    event.windowEnd,
+    eventKeys,
+  );
 
   // 다른 그룹이 잡은 슬롯 (날짜별)
   const others = await prisma.confirmation.findMany({
@@ -63,14 +85,7 @@ export default async function GroupPage({
     }
   }
 
-  const candKeys = new Set(
-    candidateDates(
-      event.windowStart,
-      event.windowEnd,
-      event.weddingDate,
-      event.bufferDays,
-    ).map((c) => c.key),
-  );
+  const candKeys = groupKeys;
 
   const confirmedKey = group.confirmation
     ? dateKey(group.confirmation.date)
@@ -171,6 +186,14 @@ export default async function GroupPage({
           </div>
         </div>
       </header>
+
+      {/* 그룹별 선택가능 날짜 */}
+      <GroupDatesEditor
+        hostToken={hostToken}
+        groupId={group.id}
+        months={groupDateCalendar}
+        initial={allowedList}
+      />
 
       {/* 멤버 & 링크 */}
       <section className="mb-10">

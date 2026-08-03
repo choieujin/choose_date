@@ -47,6 +47,18 @@ model Event {
 
   groups        Group[]
   confirmations Confirmation[]
+  blockedDates  BlockedDate[]
+}
+
+// 호스트 개인 일정: 이 날짜는 모든 그룹 후보에서 제외
+model BlockedDate {
+  id      String   @id @default(cuid())
+  eventId String
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+
+  @@unique([eventId, date])
+  @@index([eventId])
 }
 
 model Group {
@@ -60,8 +72,20 @@ model Group {
 
   members      Member[]
   confirmation Confirmation?
+  allowedDates GroupDate[]
 
   @@index([eventId])
+}
+
+// 그룹별 선택가능 날짜(허용 목록). 행이 없으면 전체 허용.
+model GroupDate {
+  id      String   @id @default(cuid())
+  groupId String
+  group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+
+  @@unique([groupId, date])
+  @@index([groupId])
 }
 
 model Member {

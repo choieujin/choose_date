@@ -5,12 +5,15 @@ import { createGroup } from "@/lib/actions";
 import {
   SLOTTYPE_LABEL,
   SLOT_LABEL,
+  buildCalendar,
   candidateDates,
+  dateKey,
   formatDateLabel,
   toDateOnly,
 } from "@/lib/domain";
 import { CopyButton } from "@/components/CopyButton";
 import { InviteMessageField } from "@/components/InviteMessageField";
+import { BlockedDatesEditor } from "@/components/BlockedDatesEditor";
 
 export default async function HostDashboard({
   params,
@@ -36,6 +39,7 @@ export default async function HostDashboard({
           confirmation: true,
         },
       },
+      blockedDates: true,
     },
   });
 
@@ -47,6 +51,14 @@ export default async function HostDashboard({
     event.weddingDate,
     event.bufferDays,
   );
+  const baseKeys = new Set(candidates.map((c) => c.key));
+  const blockedKeys = event.blockedDates.map((b) => dateKey(b.date));
+  const blockCalendar = buildCalendar(
+    event.windowStart,
+    event.windowEnd,
+    baseKeys,
+  );
+  const candidateCount = baseKeys.size - blockedKeys.length;
 
   const confirmedCount = event.groups.filter((g) => g.confirmation).length;
 
@@ -67,7 +79,7 @@ export default async function HostDashboard({
       <div className="grid grid-cols-3 gap-3 mb-6">
         <Stat label="그룹" value={`${event.groups.length}`} />
         <Stat label="확정" value={`${confirmedCount}/${event.groups.length}`} />
-        <Stat label="후보 날짜" value={`${candidates.length}일`} />
+        <Stat label="후보 날짜" value={`${candidateCount}일`} />
       </div>
 
       {/* 호스트 링크 안내 */}
@@ -77,6 +89,15 @@ export default async function HostDashboard({
           <p className="truncate text-sm text-ink">/host/{hostToken}</p>
         </div>
         <CopyButton path={`/host/${hostToken}`} label="복사" />
+      </div>
+
+      {/* 개인 일정 잠금 */}
+      <div className="mb-6">
+        <BlockedDatesEditor
+          hostToken={hostToken}
+          months={blockCalendar}
+          initial={blockedKeys}
+        />
       </div>
 
       {/* 그룹 목록 */}

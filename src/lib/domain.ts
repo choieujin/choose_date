@@ -104,6 +104,34 @@ export function cellKey(dateKeyStr: string, slot: Slot): string {
   return `${dateKeyStr}__${slot}`;
 }
 
+// 이벤트 전체 후보 날짜 키 (기간 - 버퍼 - 호스트 개인 잠금)
+export function eventCandidateKeys(
+  windowStart: Date,
+  windowEnd: Date,
+  weddingDate: Date,
+  bufferDays: number,
+  blockedKeys: Set<string>,
+): Set<string> {
+  const out = new Set<string>();
+  for (const c of candidateDates(windowStart, windowEnd, weddingDate, bufferDays)) {
+    if (!blockedKeys.has(c.key)) out.add(c.key);
+  }
+  return out;
+}
+
+// 그룹이 실제로 고를 수 있는 날짜 키.
+// allowedList 가 비어있으면 이벤트 후보 전체, 아니면 교집합.
+export function groupEffectiveKeys(
+  eventKeys: Set<string>,
+  allowedList: string[],
+): Set<string> {
+  if (allowedList.length === 0) return eventKeys;
+  const allow = new Set(allowedList);
+  const out = new Set<string>();
+  for (const k of eventKeys) if (allow.has(k)) out.add(k);
+  return out;
+}
+
 // ---- 달력(월별 그리드) ----
 export interface DayCell {
   key: string; // YYYY-MM-DD
@@ -119,17 +147,13 @@ export interface MonthGrid {
 export const WEEKDAY_HEAD = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 후보 기간이 걸친 모든 달을 달력 그리드로 만든다.
+// allowedKeys 에 있는 날짜만 isCandidate=true (선택 가능).
 export function buildCalendar(
   windowStart: Date,
   windowEnd: Date,
-  weddingDate: Date,
-  bufferDays: number,
+  allowedKeys: Set<string>,
 ): MonthGrid[] {
-  const candSet = new Set(
-    candidateDates(windowStart, windowEnd, weddingDate, bufferDays).map(
-      (c) => c.key,
-    ),
-  );
+  const candSet = allowedKeys;
 
   const start = toDateOnly(windowStart);
   const end = toDateOnly(windowEnd);

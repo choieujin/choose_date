@@ -10,7 +10,13 @@ import {
   type VoteStatus,
 } from "@prisma/client";
 import { prisma } from "./prisma";
-import { dateKey, slotsFor, toDateOnly } from "./domain";
+import {
+  dateKey,
+  eventCandidateKeys,
+  groupEffectiveKeys,
+  slotsFor,
+  toDateOnly,
+} from "./domain";
 
 // ---------- 이벤트 생성 ----------
 export async function createEvent(formData: FormData) {
@@ -103,9 +109,31 @@ export async function submitVotes(
 ) {
   const member = await prisma.member.findUnique({
     where: { token: memberToken },
-    include: { group: true },
+    include: {
+      group: {
+        include: {
+          event: { include: { blockedDates: true } },
+          allowedDates: true,
+        },
+      },
+    },
   });
   if (!member) return { ok: false, error: "링크가 올바르지 않아요." };
+
+  // 이 그룹이 실제로 고를 수 있는 날짜(기간-버퍼-개인잠금 ∩ 그룹허용) 밖은 무시
+  const evt = member.group.event;
+  const blockedKeys = new Set(evt.blockedDates.map((b) => dateKey(b.date)));
+  const eventKeys = eventCandidateKeys(
+    evt.windowStart,
+    evt.windowEnd,
+    evt.weddingDate,
+    evt.bufferDays,
+    blockedKeys,
+  );
+  const groupKeys = groupEffectiveKeys(
+    eventKeys,
+    member.group.allowedDates.map((d) => dateKey(d.date)),
+  );
 
   // 그룹의 모든 슬롯이 다른 그룹에 의해 확정된 날짜 = 완전 잠금 → 투표 무시
   const groupSlots = slotsFor(member.group.slotType);
@@ -123,7 +151,9 @@ export async function submitVotes(
     return !!taken && groupSlots.every((s) => taken.has(s));
   };
 
-  const clean = votes.filter((v) => !fullyLocked(v.date));
+  const clean = votes.filter(
+    (v) => groupKeys.has(v.date) && !fullyLocked(v.date),
+  );
 
   await prisma.$transaction([
     ...clean.map((v) =>
@@ -191,6 +221,51 @@ export async function unconfirm(hostToken: string, groupId: string) {
   await prisma.confirmation.deleteMany({ where: { groupId: group.id } });
   revalidatePath(`/host/${hostToken}`);
   revalidatePath(`/host/${hostToken}/group/${groupId}`);
+  return { ok: true };
+}
+
+// ---------- 호스트 개인 일정(잠금 날짜) 저장 ----------
+export async function setBlockedDates(hostToken: string, dateKeys: string[]) {
+  const event = await prisma.event.findUnique({ where: { hostToken } });
+  if (!event) return { ok: false, error: "이벤트를 찾을 수 없어요." };
+
+  const unique = [...new Set(dateKeys)];
+  await prisma.$transaction([
+    prisma.blockedDate.deleteMany({ where: { eventId: event.id } }),
+    ...(unique.length
+      ? [
+          prisma.blockedDate.createMany({
+            data: unique.map((d) => ({ eventId: event.id, date: toDateOnly(d) })),
+          }),
+        ]
+      : []),
+  ]);
+
+  revalidatePath(`/host/${hostToken}`, "layout");
+  return { ok: true };
+}
+
+// ---------- 그룹별 선택가능 날짜 저장 (빈 배열 = 전체 허용) ----------
+export async function setGroupDates(
+  hostToken: string,
+  groupId: string,
+  dateKeys: string[],
+) {
+  const group = await assertGroupOwnedBy(hostToken, groupId);
+
+  const unique = [...new Set(dateKeys)];
+  await prisma.$transaction([
+    prisma.groupDate.deleteMany({ where: { groupId: group.id } }),
+    ...(unique.length
+      ? [
+          prisma.groupDate.createMany({
+            data: unique.map((d) => ({ groupId: group.id, date: toDateOnly(d) })),
+          }),
+        ]
+      : []),
+  ]);
+
+  revalidatePath(`/host/${hostToken}`, "layout");
   return { ok: true };
 }
 

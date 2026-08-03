@@ -5,7 +5,9 @@ import {
   SLOT_LABEL,
   buildCalendar,
   dateKey,
+  eventCandidateKeys,
   formatDateLabel,
+  groupEffectiveKeys,
   slotsFor,
   toDateOnly,
 } from "@/lib/domain";
@@ -22,7 +24,13 @@ export default async function VotePage({
     where: { token: memberToken },
     include: {
       votes: true,
-      group: { include: { event: true, confirmation: true } },
+      group: {
+        include: {
+          event: { include: { blockedDates: true } },
+          confirmation: true,
+          allowedDates: true,
+        },
+      },
     },
   });
 
@@ -80,12 +88,20 @@ export default async function VotePage({
     if (groupSlots.every((s) => v.slots.has(s))) lockedDates[k] = v.name;
   }
 
-  const months = buildCalendar(
+  // 후보: 이벤트 전체(기간-버퍼-개인잠금) → 그룹 허용목록 교집합
+  const blockedKeys = new Set(event.blockedDates.map((b) => dateKey(b.date)));
+  const eventKeys = eventCandidateKeys(
     event.windowStart,
     event.windowEnd,
     event.weddingDate,
     event.bufferDays,
+    blockedKeys,
   );
+  const groupKeys = groupEffectiveKeys(
+    eventKeys,
+    group.allowedDates.map((d) => dateKey(d.date)),
+  );
+  const months = buildCalendar(event.windowStart, event.windowEnd, groupKeys);
 
   const initial: Record<string, VoteStatus> = {};
   for (const v of member.votes) initial[dateKey(v.date)] = v.status;
