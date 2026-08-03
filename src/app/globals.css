@@ -15,6 +15,10 @@
 
   --background: var(--cream);
   --foreground: var(--ink);
+
+  /* 폰트 (layout.tsx 의 <link> 로 로드) */
+  --font-serif-kr: "Nanum Myeongjo", serif;
+  --font-sans-kr: "Noto Sans KR", system-ui, sans-serif;
 }
 
 @theme inline {

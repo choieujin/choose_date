@@ -33,5 +33,16 @@ services:
     profiles:
       - full
 
+  # Cloudflare 무료 즉석 터널 (공개 https 주소). 로그에서 trycloudflare.com 주소 확인:
+  #   docker compose -p cheongmo logs tunnel | grep trycloudflare
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://web:3000
+    depends_on:
+      - web
+    profiles:
+      - full
+
 volumes:
   db-data:

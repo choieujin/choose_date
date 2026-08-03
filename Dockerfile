@@ -3,7 +3,8 @@ FROM node:20-alpine
 
 # Prisma 엔진에 openssl 필요
 RUN apk add --no-cache openssl
-RUN corepack enable
+# lockfile 을 만든 pnpm 버전으로 고정 (corepack 이 최신 pnpm 을 받으면 Node20 과 충돌)
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 WORKDIR /app
 

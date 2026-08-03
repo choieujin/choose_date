@@ -1,22 +1,5 @@
 import type { Metadata } from "next";
-import { Nanum_Myeongjo, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
-
-const serif = Nanum_Myeongjo({
-  variable: "--font-serif-kr",
-  weight: ["400", "700", "800"],
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
-});
-
-const sans = Noto_Sans_KR({
-  variable: "--font-sans-kr",
-  weight: ["300", "400", "500", "700"],
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
-});
 
 export const metadata: Metadata = {
   title: "청모 · 청첩장 모임 날짜 잡기",
@@ -29,7 +12,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${serif.variable} ${sans.variable} h-full`}>
+    <html lang="ko" className="h-full">
+      <head>
+        {/* 폰트는 빌드 때 받지 않고 브라우저에서 로드 (Docker 빌드 네트워크 의존 제거) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="bg-paper min-h-full flex flex-col">{children}</body>
     </html>
   );
