@@ -16,6 +16,7 @@ import {
 import { MembersManager } from "@/components/MembersManager";
 import { ConfirmGrid, type ConfirmRow } from "@/components/ConfirmGrid";
 import { GroupDatesEditor } from "@/components/GroupDatesEditor";
+import { DeleteGroupButton } from "@/components/DeleteGroupButton";
 
 export default async function GroupPage({
   params,
@@ -233,6 +234,15 @@ export default async function GroupPage({
           current={current}
         />
       </section>
+
+      {/* 그룹 삭제 */}
+      <div className="mt-10 pt-6 border-t border-line text-center">
+        <DeleteGroupButton
+          hostToken={hostToken}
+          groupId={group.id}
+          groupName={group.name}
+        />
+      </div>
     </main>
   );
 }
