@@ -141,6 +141,10 @@ export default async function GroupPage({
     name: m.name,
     token: m.token,
     voted: m.submitted || m.votes.length > 0,
+    slotPref: m.slotPref,
+    votes: m.votes
+      .map((v) => ({ key: dateKey(v.date), status: v.status }))
+      .sort((a, b) => a.key.localeCompare(b.key)),
   }));
   const submittedCount = memberRows.filter((m) => m.voted).length;
   const total = memberRows.length;
@@ -214,6 +218,7 @@ export default async function GroupPage({
           hostToken={hostToken}
           groupId={group.id}
           members={memberRows}
+          isBoth={isBoth}
         />
         <div className="mt-4">
           <SplitGroupPanel
