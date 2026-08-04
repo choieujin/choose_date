@@ -18,6 +18,7 @@ import { ConfirmGrid, type ConfirmRow } from "@/components/ConfirmGrid";
 import { GroupDatesEditor } from "@/components/GroupDatesEditor";
 import { DeleteGroupButton } from "@/components/DeleteGroupButton";
 import { SplitGroupPanel } from "@/components/SplitGroupPanel";
+import { InviteMessageEditor } from "@/components/InviteMessageEditor";
 
 export default async function GroupPage({
   params,
@@ -163,11 +164,11 @@ export default async function GroupPage({
             {SLOTTYPE_LABEL[group.slotType]}
           </span>
         </div>
-        {group.inviteMsg && (
-          <p className="mt-3 rounded-lg bg-cream-deep/40 px-4 py-3 text-sm text-ink-soft italic">
-            “{group.inviteMsg}”
-          </p>
-        )}
+        <InviteMessageEditor
+          hostToken={hostToken}
+          groupId={group.id}
+          initial={group.inviteMsg}
+        />
 
         {/* 진행률 */}
         <div className="mt-4">

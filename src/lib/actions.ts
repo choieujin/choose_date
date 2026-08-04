@@ -63,6 +63,21 @@ export async function createGroup(hostToken: string, formData: FormData) {
   revalidatePath(`/host/${hostToken}`);
 }
 
+// ---------- 인사(초대) 문구 수정 ----------
+export async function updateGroupInvite(
+  hostToken: string,
+  groupId: string,
+  inviteMsg: string,
+) {
+  const group = await assertGroupOwnedBy(hostToken, groupId);
+  await prisma.group.update({
+    where: { id: group.id },
+    data: { inviteMsg: inviteMsg.trim() || null },
+  });
+  revalidatePath(`/host/${hostToken}/group/${groupId}`);
+  return { ok: true };
+}
+
 // ---------- 멤버(이름) 추가 → 개인 링크 생성 ----------
 export async function addMembers(hostToken: string, groupId: string, namesRaw: string) {
   const group = await assertGroupOwnedBy(hostToken, groupId);
