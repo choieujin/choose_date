@@ -96,6 +96,63 @@ export async function deleteGroup(hostToken: string, groupId: string) {
   redirect(`/host/${hostToken}`);
 }
 
+// ---------- 그룹 나누기: 선택 멤버를 새 그룹으로 ----------
+export async function splitGroupToNew(
+  hostToken: string,
+  sourceGroupId: string,
+  memberIds: string[],
+  name: string,
+  slotType: SlotType,
+  inviteMsg?: string | null,
+) {
+  const source = await assertGroupOwnedBy(hostToken, sourceGroupId);
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "새 그룹 이름을 적어주세요." };
+  if (memberIds.length === 0)
+    return { ok: false, error: "나눌 멤버를 선택해주세요." };
+
+  const created = await prisma.group.create({
+    data: {
+      eventId: source.eventId,
+      name: trimmed,
+      slotType,
+      inviteMsg: inviteMsg?.trim() || null,
+    },
+  });
+
+  // 소속만 변경 (개인 링크·투표는 그대로 유지). 실제 소스 소속 멤버만 이동.
+  await prisma.member.updateMany({
+    where: { id: { in: memberIds }, groupId: source.id },
+    data: { groupId: created.id },
+  });
+
+  revalidatePath(`/host/${hostToken}`, "layout");
+  redirect(`/host/${hostToken}/group/${created.id}`);
+}
+
+// ---------- 선택 멤버를 기존 다른 그룹으로 이동 ----------
+export async function moveMembersToGroup(
+  hostToken: string,
+  sourceGroupId: string,
+  memberIds: string[],
+  targetGroupId: string,
+) {
+  const source = await assertGroupOwnedBy(hostToken, sourceGroupId);
+  const target = await assertGroupOwnedBy(hostToken, targetGroupId);
+  if (source.eventId !== target.eventId)
+    return { ok: false, error: "같은 이벤트의 그룹만 이동할 수 있어요." };
+  if (memberIds.length === 0)
+    return { ok: false, error: "이동할 멤버를 선택해주세요." };
+
+  await prisma.member.updateMany({
+    where: { id: { in: memberIds }, groupId: source.id },
+    data: { groupId: target.id },
+  });
+
+  revalidatePath(`/host/${hostToken}`, "layout");
+  return { ok: true };
+}
+
 // ---------- 투표 제출 (멤버 토큰) — 날짜 단위 ----------
 export interface DateVoteInput {
   date: string; // YYYY-MM-DD

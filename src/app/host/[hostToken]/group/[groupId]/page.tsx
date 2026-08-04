@@ -17,6 +17,7 @@ import { MembersManager } from "@/components/MembersManager";
 import { ConfirmGrid, type ConfirmRow } from "@/components/ConfirmGrid";
 import { GroupDatesEditor } from "@/components/GroupDatesEditor";
 import { DeleteGroupButton } from "@/components/DeleteGroupButton";
+import { SplitGroupPanel } from "@/components/SplitGroupPanel";
 
 export default async function GroupPage({
   params,
@@ -42,6 +43,13 @@ export default async function GroupPage({
   const event = group.event;
   const groupSlots = slotsFor(group.slotType);
   const isBoth = group.slotType === "BOTH";
+
+  // 나누기/이동용: 같은 이벤트의 다른 그룹들
+  const otherGroups = await prisma.group.findMany({
+    where: { eventId: event.id, id: { not: group.id } },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "asc" },
+  });
 
   // 후보 날짜: 이벤트 전체(기간-버퍼-개인잠금) → 그룹 허용목록 교집합
   const blockedKeys = new Set(event.blockedDates.map((b) => dateKey(b.date)));
@@ -206,6 +214,15 @@ export default async function GroupPage({
           groupId={group.id}
           members={memberRows}
         />
+        <div className="mt-4">
+          <SplitGroupPanel
+            hostToken={hostToken}
+            sourceGroupId={group.id}
+            members={group.members.map((m) => ({ id: m.id, name: m.name }))}
+            otherGroups={otherGroups}
+            sourceSlotType={group.slotType}
+          />
+        </div>
       </section>
 
       {/* 집계 & 확정 */}
